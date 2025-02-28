@@ -1,4 +1,4 @@
-name: .NET Framework 4.5 Build
+name: .NET
 
 on:
   push:
@@ -8,22 +8,23 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2019
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-    # 1) Restore packages with NuGet
-    - name: Restore NuGet packages
-      run: nuget restore YourSolution.sln
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        # Even though this says '8.0.x', the key point here is
+        # we're on a Windows runner that includes .NET Framework assemblies.
+        dotnet-version: '8.0.x'
 
-    # 2) Build with MSBuild
-    - name: Build solution
-      run: msbuild YourSolution.sln /p:Configuration=Release
+    - name: Restore dependencies
+      run: dotnet restore
 
-    # 3) Run tests with the VSTest console
-    - name: Run tests
-      run: |
-        "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\Extensions\TestPlatform\vstest.console.exe" ^
-          .\Tests\bin\Release\MyTests.dll
+    - name: Build
+      run: dotnet build --no-restore
+
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
